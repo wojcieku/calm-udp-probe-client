@@ -14,8 +14,8 @@ func main() {
 
 	metricsPusher := NewCALMMetricsPusher("localhost:9091", "myJob")
 	metricsPusher.SetAvgRTTValue(20)
-	metricsPusher.SetAvgOneWayLatency(233)
-	metricsPusher.SetMaxRTT(699)
+	metricsPusher.SetAvgOneWayLatency(300)
+	metricsPusher.SetMaxRTT(300)
 
 	metricsPusher.addMetrics()
 

@@ -44,7 +44,7 @@ func NewCALMMetricsPusher(pushGatewayURL string, job string) *CALMMetricsPusher 
 func (m *CALMMetricsPusher) addMetrics() {
 	// tutaj w grouping labelki, TODO uzmiennic
 	m.gatewayPusher.
-		Grouping("measurement_ID", "DRUGI POMIAR").
+		Grouping("measurement_ID", "PIERWSZY_POMIAR").
 		Grouping("source_node", "client-side-worker").
 		Grouping("target_node", "server-side-worker").
 		Grouping("itd", "itp")
@@ -60,7 +60,7 @@ func (m *CALMMetricsPusher) addMetrics() {
 //	Help: "Average Round Trip Time measured between particular nodes between clusters",
 //})
 //
-//var avgOneWayLatency = prometheus.NewGauge(prometheus.GaugeOpts{
+//var avgClientToServerLatency = prometheus.NewGauge(prometheus.GaugeOpts{
 //	Name: "calm_avg_one_way_latency_client_to_server",
 //	Help: "Average one way latency between particular nodes between clusters measured from client to server",
 //})
