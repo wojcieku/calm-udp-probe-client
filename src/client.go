@@ -12,8 +12,8 @@ import (
 
 var packetsSentCounter int = 0 //packet lost percentage?
 
-func runMeasurement(remoteIp *string, remotePort *int, interval *int, duration *int) {
-	conn := prepareConnection(remoteIp, remotePort)
+func runMeasurement(remoteIP *string, remotePort *int, interval *int, duration *int) {
+	conn := prepareConnection(remoteIP, remotePort)
 	//close the connection
 	defer conn.Close()
 
@@ -32,8 +32,8 @@ func runMeasurement(remoteIp *string, remotePort *int, interval *int, duration *
 	}
 }
 
-func prepareConnection(remoteIp *string, remotePort *int) *net.UDPConn {
-	udpServer, err := net.ResolveUDPAddr("udp", *remoteIp+":"+strconv.Itoa(*remotePort))
+func prepareConnection(remoteIP *string, remotePort *int) *net.UDPConn {
+	udpServer, err := net.ResolveUDPAddr("udp", *remoteIP+":"+strconv.Itoa(*remotePort))
 	if err != nil {
 		println("ResolveUDPAddr failed:", err.Error())
 		os.Exit(1)
@@ -73,9 +73,8 @@ func handleResponse(conn *net.UDPConn) {
 		println("Read data failed:", err.Error())
 		if strings.Contains(err.Error(), "timeout") {
 			return
-		} else {
-			os.Exit(1)
 		}
+		os.Exit(1)
 	}
 	received = bytes.Trim(received, "\x00")
 	receivedString := string(received)
