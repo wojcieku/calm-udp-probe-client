@@ -11,10 +11,10 @@ import (
 
 // TODO packet loss percentage
 type CALMMetricsPusher struct {
-	gatewayPusher    *push.Pusher
-	avgRTT           prometheus.Gauge
-	maxRTT           prometheus.Gauge
-	avgOneWayLatency prometheus.Gauge
+	gatewayPusher            *push.Pusher
+	avgRTT                   prometheus.Gauge
+	maxRTT                   prometheus.Gauge
+	avgClientToServerLatency prometheus.Gauge
 }
 
 func NewCALMMetricsPusher(pushGatewayURL string, job string) *CALMMetricsPusher {
@@ -28,14 +28,14 @@ func NewCALMMetricsPusher(pushGatewayURL string, job string) *CALMMetricsPusher 
 			Name: "calm_max_node_to_node_latency",
 			Help: "Maximum latency measured between particular nodes between clusters",
 		}),
-		avgOneWayLatency: prometheus.NewGauge(prometheus.GaugeOpts{
+		avgClientToServerLatency: prometheus.NewGauge(prometheus.GaugeOpts{
 			Name: "calm_avg_one_way_latency_client_to_server",
 			Help: "Average one way latency between particular nodes between clusters measured from client to server",
 		}),
 	}
 
 	registry := prometheus.NewRegistry()
-	registry.MustRegister(calmPusher.avgOneWayLatency, calmPusher.avgRTT, calmPusher.maxRTT)
+	registry.MustRegister(calmPusher.avgClientToServerLatency, calmPusher.avgRTT, calmPusher.maxRTT)
 	calmPusher.gatewayPusher.Gatherer(registry)
 
 	return &calmPusher
@@ -74,10 +74,10 @@ func (c *CALMMetricsPusher) SetAvgRTTValue(value float64) {
 	c.avgRTT.Set(value)
 }
 
-func (c *CALMMetricsPusher) SetMaxRTT(value float64) {
+func (c *CALMMetricsPusher) SetMaxRTTValue(value float64) {
 	c.maxRTT.Set(value)
 }
 
-func (c *CALMMetricsPusher) SetAvgOneWayLatency(value float64) {
-	c.avgOneWayLatency.Set(value)
+func (c *CALMMetricsPusher) SetAvgClientToServerLatencyValue(value float64) {
+	c.avgClientToServerLatency.Set(value)
 }

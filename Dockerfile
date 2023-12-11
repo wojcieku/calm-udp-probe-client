@@ -19,5 +19,6 @@ ENV ADDRESS="localhost"
 ENV PORT=1501
 ENV INTERVAL=100
 ENV DURATION=10
+ENV METRICS_AGGREGATOR="localhost:9091"
 
-ENTRYPOINT ["/bin/sh", "-c","./latencyClient -addr $ADDRESS -port $PORT -interval $INTERVAL -duration $DURATION"]
+ENTRYPOINT ["/bin/sh", "-c","./latencyClient -addr $ADDRESS -port $PORT -interval $INTERVAL -duration $DURATION -aggr $METRICS_AGGREGATOR"]

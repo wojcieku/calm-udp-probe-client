@@ -61,7 +61,6 @@ func prepareConnection(remoteIP *string, remotePort *int) *net.UDPConn {
 	return conn
 }
 
-// metric format: sentClientTimestamp;serverReceivedTimestamp
 func measure(conn *net.UDPConn) {
 	send(conn)
 	result, err := handleResponse(conn)
