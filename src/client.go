@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"github.com/montanaflynn/stats"
+	log "github.com/sirupsen/logrus"
 	"net"
 	"os"
 	"strconv"
@@ -10,8 +11,7 @@ import (
 	"time"
 )
 
-// TODO przetwarzanie wynikow
-var packetsSentCounter int = 0
+var packetsSentCounter int
 var rawMetrics []RawMetric
 
 type RawMetric struct {
@@ -23,7 +23,9 @@ type RawMetric struct {
 type CALMMetric struct {
 	avgRTT                   float64
 	maxRTT                   float64
+	percentile95thRTT        float64
 	avgClientToServerLatency float64
+	avgServerToClientLatency float64
 	packetLossPercentage     float64
 }
 
@@ -41,7 +43,7 @@ func runMeasurement(remoteIP *string, remotePort *int, interval *int, duration *
 		case <-ticker.C:
 			measure(conn)
 		case <-timer:
-			print("Time's up, measurement finished")
+			log.Info("Time's up, measurement finished")
 			return processRawMetrics()
 		}
 	}
@@ -50,12 +52,12 @@ func runMeasurement(remoteIP *string, remotePort *int, interval *int, duration *
 func prepareConnection(remoteIP *string, remotePort *int) *net.UDPConn {
 	udpServer, err := net.ResolveUDPAddr("udp", *remoteIP+":"+strconv.Itoa(*remotePort))
 	if err != nil {
-		println("ResolveUDPAddr failed:", err.Error())
+		log.Error("ResolveUDPAddr failed:", err.Error())
 		os.Exit(1)
 	}
 	conn, err := net.DialUDP("udp", nil, udpServer)
 	if err != nil {
-		println("Listen failed:", err.Error())
+		log.Error("Listen failed:", err.Error())
 		os.Exit(1)
 	}
 	return conn
@@ -75,7 +77,7 @@ func send(conn *net.UDPConn) {
 	packetsSentCounter++
 
 	if err != nil {
-		println("Write data failed:", err.Error())
+		log.Error("Write data failed:", err.Error())
 		os.Exit(1)
 	}
 }
@@ -85,7 +87,7 @@ func handleResponse(conn *net.UDPConn) (RawMetric, error) {
 	received := make([]byte, 50)
 	_, err := conn.Read(received)
 	if err != nil {
-		println("Read data failed:", err.Error())
+		log.Error("Read data failed:", err.Error())
 		if strings.Contains(err.Error(), "timeout") {
 			return result, err
 		}
@@ -99,11 +101,11 @@ func handleResponse(conn *net.UDPConn) (RawMetric, error) {
 
 	clientSendStamp, err := time.Parse(time.StampMilli, stamps[0])
 	if err != nil {
-		println("client stamp parsing error", err.Error())
+		log.Error("client stamp parsing error", err.Error())
 	}
 	serverStamp, err := time.Parse(time.StampMilli, stamps[1])
 	if err != nil {
-		println("server stamp parsing error", err)
+		log.Error("server stamp parsing error", err)
 	}
 
 	result.clientSendStamp = clientSendStamp
@@ -114,38 +116,53 @@ func handleResponse(conn *net.UDPConn) (RawMetric, error) {
 
 func processRawMetrics() CALMMetric {
 	calmMetric := CALMMetric{}
-	var clientToServerDurations []float64
 	var rtts []float64
+	var clientToServerDurations []float64
+	var serverToClientDurations []float64
+
 	// calculate latencies
 	for _, r := range rawMetrics {
+		rtt := r.clientReceiveStamp.Sub(r.clientSendStamp)
+		rtts = append(rtts, float64(rtt.Milliseconds()))
+
 		clientToServerDuration := r.serverReceiveStamp.Sub(r.clientSendStamp)
 		clientToServerDurations = append(clientToServerDurations, float64(clientToServerDuration.Milliseconds()))
 
-		rtt := r.clientReceiveStamp.Sub(r.clientSendStamp)
-		rtts = append(rtts, float64(rtt.Milliseconds()))
-	}
-
-	avgClientToServerLatency, err := stats.Mean(clientToServerDurations)
-	if err != nil {
-		// TODO handle err
+		serverToClientDuration := r.clientReceiveStamp.Sub(r.serverReceiveStamp)
+		serverToClientDurations = append(serverToClientDurations, float64(serverToClientDuration.Milliseconds()))
 	}
 
 	avgRTT, err := stats.Mean(rtts)
 	if err != nil {
-		// TODO handle err
+		log.Error("Failed to calculate RTT mean:", err.Error())
 	}
 
 	maxRTT, err := stats.Max(rtts)
 	if err != nil {
-		// TODO handle err
+		log.Error("Failed to calculate max RTT:", err.Error())
 	}
 
-	// packet loss percentage
-	packetsReceived := cap(rawMetrics)
-	calmMetric.packetLossPercentage = float64(packetsReceived/packetsSentCounter) * 100
+	percentile95thRTT, err := stats.Percentile(rtts, 95)
+	if err != nil {
+		log.Error("Failed to calculate 95th percentile of RTT:", err.Error())
+	}
+
+	avgClientToServerLatency, err := stats.Mean(clientToServerDurations)
+	if err != nil {
+		log.Error("Failed to calculate client to server latency mean:", err.Error())
+	}
+
+	avgServerToClientLatency, err := stats.Mean(serverToClientDurations)
+	if err != nil {
+		log.Error("Failed to calculate server to client latency mean", err.Error())
+	}
+
 	calmMetric.avgRTT = avgRTT
 	calmMetric.maxRTT = maxRTT
+	calmMetric.percentile95thRTT = percentile95thRTT
 	calmMetric.avgClientToServerLatency = avgClientToServerLatency
+	calmMetric.avgServerToClientLatency = avgServerToClientLatency
+	calmMetric.packetLossPercentage = float64(cap(rawMetrics)/packetsSentCounter) * 100
 
 	return calmMetric
 }

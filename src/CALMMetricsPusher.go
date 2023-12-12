@@ -1,20 +1,19 @@
 package main
 
 import (
-	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
+	log "github.com/sirupsen/logrus"
 )
 
-// TODO o co chodzi z gatherer i collector itd., raczej użyj Add()
-// tutaj chyba jakiś przykład jak to działa https://pkg.go.dev/github.com/prometheus/client_golang/prometheus/push#example-Pusher.Add
-
-// TODO packet loss percentage
 type CALMMetricsPusher struct {
 	gatewayPusher            *push.Pusher
 	avgRTT                   prometheus.Gauge
 	maxRTT                   prometheus.Gauge
+	percentile95thRTT        prometheus.Gauge
 	avgClientToServerLatency prometheus.Gauge
+	avgServerToClientLatency prometheus.Gauge
+	packetLossPercentage     prometheus.Gauge
 }
 
 func NewCALMMetricsPusher(pushGatewayURL string, job string) *CALMMetricsPusher {
@@ -22,15 +21,27 @@ func NewCALMMetricsPusher(pushGatewayURL string, job string) *CALMMetricsPusher 
 		gatewayPusher: push.New(pushGatewayURL, job),
 		avgRTT: prometheus.NewGauge(prometheus.GaugeOpts{
 			Name: "calm_average_RTT",
-			Help: "Average Round Trip Time measured between particular nodes between clusters",
+			Help: "Average Round Trip Time measured between particular nodes",
 		}),
 		maxRTT: prometheus.NewGauge(prometheus.GaugeOpts{
-			Name: "calm_max_node_to_node_latency",
-			Help: "Maximum latency measured between particular nodes between clusters",
+			Name: "calm_max_RTT",
+			Help: "Maximal Round Trip Time measured between particular nodes",
+		}),
+		percentile95thRTT: prometheus.NewGauge(prometheus.GaugeOpts{
+			Name: "calm_95th_percentile_RTT",
+			Help: "95th percentile of RTT measured between particular nodes",
 		}),
 		avgClientToServerLatency: prometheus.NewGauge(prometheus.GaugeOpts{
 			Name: "calm_avg_one_way_latency_client_to_server",
-			Help: "Average one way latency between particular nodes between clusters measured from client to server",
+			Help: "Average one way latency between particular nodes measured from client to server",
+		}),
+		avgServerToClientLatency: prometheus.NewGauge(prometheus.GaugeOpts{
+			Name: "calm_avg_one_way_latency_server_to_client",
+			Help: "Average one way latency between particular nodes measured from server to client",
+		}),
+		packetLossPercentage: prometheus.NewGauge(prometheus.GaugeOpts{
+			Name: "calm_packet_loss_percentage",
+			Help: "Percentage of lost packet sent",
 		}),
 	}
 
@@ -41,34 +52,20 @@ func NewCALMMetricsPusher(pushGatewayURL string, job string) *CALMMetricsPusher 
 	return &calmPusher
 }
 
-func (m *CALMMetricsPusher) addMetrics() {
-	// tutaj w grouping labelki, TODO uzmiennic
+func (m *CALMMetricsPusher) addMetrics(measurementID string, sourceNode string,
+	targetNode string, sourceCluster string, targetCluster string) {
 	m.gatewayPusher.
-		Grouping("measurement_ID", "PIERWSZY_POMIAR").
-		Grouping("source_node", "client-side-worker").
-		Grouping("target_node", "server-side-worker").
-		Grouping("itd", "itp")
+		Grouping("measurement_ID", measurementID).
+		Grouping("source_node", sourceNode).
+		Grouping("target_node", targetNode).
+		Grouping("source_cluster", sourceCluster).
+		Grouping("target_cluster", targetCluster)
 
 	err := m.gatewayPusher.Add()
 	if err != nil {
-		fmt.Println("Could not push to Pushgateway:", err)
+		log.Error("Could not push to Pushgateway:", err.Error())
 	}
 }
-
-// var avgRTT = prometheus.NewGauge(prometheus.GaugeOpts{
-//	Name: "calm_average_RTT",
-//	Help: "Average Round Trip Time measured between particular nodes between clusters",
-//})
-//
-//var avgClientToServerLatency = prometheus.NewGauge(prometheus.GaugeOpts{
-//	Name: "calm_avg_one_way_latency_client_to_server",
-//	Help: "Average one way latency between particular nodes between clusters measured from client to server",
-//})
-//
-//var maxRTT = prometheus.NewGauge(prometheus.GaugeOpts{
-//	Name: "calm_max_node_to_node_latency",
-//	Help: "Maximum latency measured between particular nodes between clusters",
-//})
 
 func (c *CALMMetricsPusher) SetAvgRTTValue(value float64) {
 	c.avgRTT.Set(value)
@@ -78,6 +75,18 @@ func (c *CALMMetricsPusher) SetMaxRTTValue(value float64) {
 	c.maxRTT.Set(value)
 }
 
+func (c *CALMMetricsPusher) SetPercentile95thRTTValue(value float64) {
+	c.percentile95thRTT.Set(value)
+}
+
 func (c *CALMMetricsPusher) SetAvgClientToServerLatencyValue(value float64) {
 	c.avgClientToServerLatency.Set(value)
+}
+
+func (c *CALMMetricsPusher) SetAvgServerToClientLatencyValue(value float64) {
+	c.avgServerToClientLatency.Set(value)
+}
+
+func (c *CALMMetricsPusher) SetPacketLossPercentageValue(value float64) {
+	c.packetLossPercentage.Set(value)
 }

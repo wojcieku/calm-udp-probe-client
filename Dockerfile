@@ -20,5 +20,12 @@ ENV PORT=1501
 ENV INTERVAL=100
 ENV DURATION=10
 ENV METRICS_AGGREGATOR="localhost:9091"
+ENV MEASUREMENT_ID = ""
+ENV SRC_NODE = ""
+ENV TARGET_NODE = ""
+ENV SRC_CLUSTER = ""
+ENV TARGET_CLUSTER = ""
 
-ENTRYPOINT ["/bin/sh", "-c","./latencyClient -addr $ADDRESS -port $PORT -interval $INTERVAL -duration $DURATION -aggr $METRICS_AGGREGATOR"]
+ENTRYPOINT ["/bin/sh", "-c","./latencyClient -addr $ADDRESS -port $PORT -interval $INTERVAL -duration $DURATION \
+ -aggr $METRICS_AGGREGATOR -id $MEASUREMENT_ID -srcNode $SRC_NODE -targetNode $TARGET_NODE -srcCluster $SRC_CLUSTER \
+ -targetCluster $TARGET_CLUSTER"]
