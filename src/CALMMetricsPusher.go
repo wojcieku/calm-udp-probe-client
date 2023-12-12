@@ -46,7 +46,8 @@ func NewCALMMetricsPusher(pushGatewayURL string, job string) *CALMMetricsPusher 
 	}
 
 	registry := prometheus.NewRegistry()
-	registry.MustRegister(calmPusher.avgClientToServerLatency, calmPusher.avgRTT, calmPusher.maxRTT)
+	registry.MustRegister(calmPusher.avgRTT, calmPusher.maxRTT, calmPusher.percentile95thRTT,
+		calmPusher.avgClientToServerLatency, calmPusher.avgServerToClientLatency, calmPusher.packetLossPercentage)
 	calmPusher.gatewayPusher.Gatherer(registry)
 
 	return &calmPusher

@@ -66,7 +66,7 @@ func prepareConnection(remoteIP *string, remotePort *int) *net.UDPConn {
 func measure(conn *net.UDPConn) {
 	send(conn)
 	result, err := handleResponse(conn)
-	if err != nil {
+	if err == nil {
 		rawMetrics = append(rawMetrics, result)
 	}
 }
@@ -93,7 +93,10 @@ func handleResponse(conn *net.UDPConn) (RawMetric, error) {
 		}
 		os.Exit(1)
 	}
-	clientReceivedStamp := time.Now()
+	clientReceivedStamp, err := time.Parse(time.StampMilli, time.Now().Format(time.StampMilli))
+	if err != nil {
+		log.Error("received client stamp parsing error", err.Error())
+	}
 	received = bytes.Trim(received, "\x00")
 	receivedString := string(received)
 
@@ -162,7 +165,7 @@ func processRawMetrics() CALMMetric {
 	calmMetric.percentile95thRTT = percentile95thRTT
 	calmMetric.avgClientToServerLatency = avgClientToServerLatency
 	calmMetric.avgServerToClientLatency = avgServerToClientLatency
-	calmMetric.packetLossPercentage = float64(cap(rawMetrics)/packetsSentCounter) * 100
+	calmMetric.packetLossPercentage = float64((cap(rawMetrics)-packetsSentCounter)/packetsSentCounter) * 100
 
 	return calmMetric
 }
