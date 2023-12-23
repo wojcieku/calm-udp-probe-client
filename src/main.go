@@ -27,7 +27,5 @@ func setMetricsValues(metricsPusher *CALMMetricsPusher, calmMetric CALMMetric) {
 	metricsPusher.SetAvgRTTValue(calmMetric.avgRTT)
 	metricsPusher.SetMaxRTTValue(calmMetric.maxRTT)
 	metricsPusher.SetPercentile95thRTTValue(calmMetric.percentile95thRTT)
-	metricsPusher.SetAvgClientToServerLatencyValue(calmMetric.avgClientToServerLatency)
-	metricsPusher.SetAvgServerToClientLatencyValue(calmMetric.avgServerToClientLatency)
 	metricsPusher.SetPacketLossPercentageValue(calmMetric.packetLossPercentage)
 }

@@ -21,12 +21,10 @@ type RawMetric struct {
 }
 
 type CALMMetric struct {
-	avgRTT                   float64
-	maxRTT                   float64
-	percentile95thRTT        float64
-	avgClientToServerLatency float64
-	avgServerToClientLatency float64
-	packetLossPercentage     float64
+	avgRTT               float64
+	maxRTT               float64
+	percentile95thRTT    float64
+	packetLossPercentage float64
 }
 
 func runMeasurement(remoteIP *string, remotePort *int, interval *int, duration *int) CALMMetric {
@@ -150,21 +148,9 @@ func processRawMetrics() CALMMetric {
 		log.Error("Failed to calculate 95th percentile of RTT:", err.Error())
 	}
 
-	avgClientToServerLatency, err := stats.Mean(clientToServerDurations)
-	if err != nil {
-		log.Error("Failed to calculate client to server latency mean:", err.Error())
-	}
-
-	avgServerToClientLatency, err := stats.Mean(serverToClientDurations)
-	if err != nil {
-		log.Error("Failed to calculate server to client latency mean", err.Error())
-	}
-
 	calmMetric.avgRTT = avgRTT
 	calmMetric.maxRTT = maxRTT
 	calmMetric.percentile95thRTT = percentile95thRTT
-	calmMetric.avgClientToServerLatency = avgClientToServerLatency
-	calmMetric.avgServerToClientLatency = avgServerToClientLatency
 	calmMetric.packetLossPercentage = float64((cap(rawMetrics)-packetsSentCounter)/packetsSentCounter) * 100
 
 	return calmMetric

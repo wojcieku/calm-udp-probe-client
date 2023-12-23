@@ -7,13 +7,11 @@ import (
 )
 
 type CALMMetricsPusher struct {
-	gatewayPusher            *push.Pusher
-	avgRTT                   prometheus.Gauge
-	maxRTT                   prometheus.Gauge
-	percentile95thRTT        prometheus.Gauge
-	avgClientToServerLatency prometheus.Gauge
-	avgServerToClientLatency prometheus.Gauge
-	packetLossPercentage     prometheus.Gauge
+	gatewayPusher        *push.Pusher
+	avgRTT               prometheus.Gauge
+	maxRTT               prometheus.Gauge
+	percentile95thRTT    prometheus.Gauge
+	packetLossPercentage prometheus.Gauge
 }
 
 func NewCALMMetricsPusher(pushGatewayURL string, job string) *CALMMetricsPusher {
@@ -31,14 +29,6 @@ func NewCALMMetricsPusher(pushGatewayURL string, job string) *CALMMetricsPusher 
 			Name: "calm_95th_percentile_RTT",
 			Help: "95th percentile of RTT measured between particular nodes",
 		}),
-		avgClientToServerLatency: prometheus.NewGauge(prometheus.GaugeOpts{
-			Name: "calm_avg_one_way_latency_client_to_server",
-			Help: "Average one way latency between particular nodes measured from client to server",
-		}),
-		avgServerToClientLatency: prometheus.NewGauge(prometheus.GaugeOpts{
-			Name: "calm_avg_one_way_latency_server_to_client",
-			Help: "Average one way latency between particular nodes measured from server to client",
-		}),
 		packetLossPercentage: prometheus.NewGauge(prometheus.GaugeOpts{
 			Name: "calm_packet_loss_percentage",
 			Help: "Percentage of lost packet sent",
@@ -47,7 +37,7 @@ func NewCALMMetricsPusher(pushGatewayURL string, job string) *CALMMetricsPusher 
 
 	registry := prometheus.NewRegistry()
 	registry.MustRegister(calmPusher.avgRTT, calmPusher.maxRTT, calmPusher.percentile95thRTT,
-		calmPusher.avgClientToServerLatency, calmPusher.avgServerToClientLatency, calmPusher.packetLossPercentage)
+		calmPusher.packetLossPercentage)
 	calmPusher.gatewayPusher.Gatherer(registry)
 
 	return &calmPusher
@@ -78,14 +68,6 @@ func (c *CALMMetricsPusher) SetMaxRTTValue(value float64) {
 
 func (c *CALMMetricsPusher) SetPercentile95thRTTValue(value float64) {
 	c.percentile95thRTT.Set(value)
-}
-
-func (c *CALMMetricsPusher) SetAvgClientToServerLatencyValue(value float64) {
-	c.avgClientToServerLatency.Set(value)
-}
-
-func (c *CALMMetricsPusher) SetAvgServerToClientLatencyValue(value float64) {
-	c.avgServerToClientLatency.Set(value)
 }
 
 func (c *CALMMetricsPusher) SetPacketLossPercentageValue(value float64) {
