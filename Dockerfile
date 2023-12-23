@@ -1,11 +1,13 @@
-FROM golang:1.20 AS build-stage
+FROM --platform=$BUILDPLATFORM golang:1.20 AS build-stage
+ARG TARGETOS
+ARG TARGETARCH
 
 WORKDIR /probeClient
-COPY go.mod /probeClient
+COPY go.mod go.sum ./
 RUN go mod download
 
 COPY /src/*.go ./
-RUN CGO_ENABLED=0 GOOS=linux go build -o /latencyClient
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /latencyClient
 
 FROM alpine:3.14 AS build-release-stage
 
