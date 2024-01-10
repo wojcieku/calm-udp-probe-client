@@ -19,15 +19,15 @@ func NewCALMMetricsPusher(pushGatewayURL string, job string) *CALMMetricsPusher 
 		gatewayPusher: push.New(pushGatewayURL, job),
 		avgRTT: prometheus.NewGauge(prometheus.GaugeOpts{
 			Name: "calm_average_RTT",
-			Help: "Average Round Trip Time measured between particular nodes",
+			Help: "Average Round Trip Time measured between particular nodes [ms]",
 		}),
 		maxRTT: prometheus.NewGauge(prometheus.GaugeOpts{
 			Name: "calm_max_RTT",
-			Help: "Maximal Round Trip Time measured between particular nodes",
+			Help: "Maximal Round Trip Time measured between particular nodes [ms]",
 		}),
 		percentile95thRTT: prometheus.NewGauge(prometheus.GaugeOpts{
 			Name: "calm_95th_percentile_RTT",
-			Help: "95th percentile of RTT measured between particular nodes",
+			Help: "95th percentile of RTT measured between particular nodes [ms]",
 		}),
 		packetLossPercentage: prometheus.NewGauge(prometheus.GaugeOpts{
 			Name: "calm_packet_loss_percentage",
