@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"github.com/montanaflynn/stats"
+	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 	"net"
 	"os"
@@ -137,16 +138,19 @@ func processRawMetrics() CALMMetric {
 	if err != nil {
 		log.Error("Failed to calculate RTT mean:", err.Error())
 	}
+	avgRTT = truncateResult(avgRTT)
 
 	maxRTT, err := stats.Max(rtts)
 	if err != nil {
 		log.Error("Failed to calculate max RTT:", err.Error())
 	}
+	maxRTT = truncateResult(maxRTT)
 
 	percentile95thRTT, err := stats.Percentile(rtts, 95)
 	if err != nil {
 		log.Error("Failed to calculate 95th percentile of RTT:", err.Error())
 	}
+	truncateResult(percentile95thRTT)
 
 	calmMetric.avgRTT = avgRTT
 	calmMetric.maxRTT = maxRTT
@@ -154,4 +158,9 @@ func processRawMetrics() CALMMetric {
 	calmMetric.packetLossPercentage = float64((cap(rawMetrics)-packetsSentCounter)/packetsSentCounter) * 100
 
 	return calmMetric
+}
+
+func truncateResult(result float64) float64 {
+	result, _ = decimal.NewFromFloat(result).Truncate(2).Float64()
+	return result
 }

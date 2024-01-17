@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/montanaflynn/stats v0.7.1
 	github.com/prometheus/client_golang v1.17.0
+	github.com/shopspring/decimal v1.3.1
 	github.com/sirupsen/logrus v1.9.3
 )
 
