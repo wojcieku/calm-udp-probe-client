@@ -119,19 +119,11 @@ func handleResponse(conn *net.UDPConn) (RawMetric, error) {
 func processRawMetrics() CALMMetric {
 	calmMetric := CALMMetric{}
 	var rtts []float64
-	var clientToServerDurations []float64
-	var serverToClientDurations []float64
 
 	// calculate latencies
 	for _, r := range rawMetrics {
 		rtt := r.clientReceiveStamp.Sub(r.clientSendStamp)
 		rtts = append(rtts, float64(rtt.Milliseconds()))
-
-		clientToServerDuration := r.serverReceiveStamp.Sub(r.clientSendStamp)
-		clientToServerDurations = append(clientToServerDurations, float64(clientToServerDuration.Milliseconds()))
-
-		serverToClientDuration := r.clientReceiveStamp.Sub(r.serverReceiveStamp)
-		serverToClientDurations = append(serverToClientDurations, float64(serverToClientDuration.Milliseconds()))
 	}
 
 	avgRTT, err := stats.Mean(rtts)
